@@ -158,6 +158,15 @@ app.post('/admin/stats', verifyAdmin, async (req, res) => {
     } catch (err) { res.status(500).json({ msg: "Failed to save stats" }); }
 });
 
+app.put('/admin/stats/:id', verifyAdmin, async (req, res) => {
+    try {
+        const updatedStats = await StatsModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updatedStats);
+    } catch (err) {
+        res.status(500).json({ msg: "Stats update failed" });
+    }
+});
+
 app.delete('/admin/stats/:id', verifyAdmin, async (req, res) => {
     try {
         await StatsModel.findByIdAndDelete(req.params.id);
