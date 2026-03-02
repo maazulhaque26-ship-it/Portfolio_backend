@@ -35,8 +35,8 @@ app.post('/admin/login', async (req, res) => {
         const token = jwt.sign({ isAdmin: true }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
         return res.cookie('token', token, {
             httpOnly: true, 
-            secure: false, 
-            sameSite: 'lax', 
+            secure: true, 
+            sameSite: 'none', 
             maxAge: 86400000 
         }).json({ msg: "Login successful!" });
     }
