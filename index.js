@@ -18,9 +18,9 @@ const ContactModel = require('./models/contactModel');
 // 3. Middleware
 const verifyAdmin = require('./middlewares/islogin');
 
-// 4. CORS Setup
+// 4. CORS Setup - Fixed for Vercel + Render
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173", 
+    origin: process.env.FRONTEND_URL || "https://portfolio-frontend-five-gray.vercel.app", 
     credentials: true, 
     methods: ["GET", "POST", "PUT", "DELETE"],
 }));
@@ -29,14 +29,16 @@ app.use(cookieParser());
 app.use(express.json());
 
 // ================= AUTH ROUTES =================
+
+// LOGIN: Added 'secure' and 'sameSite: none' for Cross-Domain Cookies
 app.post('/admin/login', async (req, res) => {
     const { email, password } = req.body;
     if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
         const token = jwt.sign({ isAdmin: true }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
         return res.cookie('token', token, {
             httpOnly: true, 
-            secure: true, 
-            sameSite: 'none', 
+            secure: true,        // Required for HTTPS (Vercel/Render)
+            sameSite: 'none',    // Required for Cross-site cookies
             maxAge: 86400000 
         }).json({ msg: "Login successful!" });
     }
@@ -45,8 +47,13 @@ app.post('/admin/login', async (req, res) => {
 
 app.get('/admin/status', verifyAdmin, (req, res) => res.sendStatus(200));
 
+// LOGOUT: Fixed to clear cookies properly on live site
 app.post('/admin/logout', (req, res) => {
-    res.clearCookie('token').json({ msg: "Logged out successfully!" });
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+    }).json({ msg: "Logged out successfully!" });
 });
 
 // ================= HERO ROUTES =================
@@ -173,5 +180,5 @@ app.put('/admin/contact', verifyAdmin, async (req, res) => {
 });
 
 // 5. Server Setup
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; 
 app.listen(PORT, () => console.log(`[Success] Server is running on port: ${PORT}`));
